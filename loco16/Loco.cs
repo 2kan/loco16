@@ -26,19 +26,21 @@ namespace loco16
 
 			byte[] encoded = System.IO.File.ReadAllBytes( a_filename );
 
-			//uint zchecksum = 0;
-			//for (int i =0; i<encoded.Length; ++i )
-			//{
-			//	zchecksum += encoded[i];
-			//}
+			uint zchecksum = 0;
+			for ( int i = 0; i < encoded.Length; ++i )
+			{
+				zchecksum += encoded[i];
+			}
 
 			m_chunkMan.SplitChunks( encoded );
 			m_chunkMan.DecodeChunks();
-			uint checksum = m_chunkMan.CalculateChecksum();
-			//m_chunkMan.WriteFormattedChunksToFile();
+
+			m_chunkMan.FindTheMoney(new byte[] { 0xee, 0x7d }, new byte[] { 0xff, 0xff } );
+
+			m_chunkMan.WriteFormattedChunksToFile();
 			string[] split = a_filename.Split( '\\' );
-			byte[] origChecksum = encoded.Skip( encoded.Length - 4 ).ToArray();
-			m_chunkMan.WriteUncompressedToFile(split[split.Length - 1], origChecksum);
+
+			m_chunkMan.WriteUncompressedToFile( split[split.Length - 1] );//, origChecksum );
 
 
 			return true;

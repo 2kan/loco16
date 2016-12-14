@@ -69,6 +69,11 @@ namespace loco16
 			return m_chunks[a_chunkId];
 		}
 
+		public List<Chunk> GetChunks ()
+		{
+			return m_chunks;
+		}
+
 		public void WriteFormattedChunksToFile ()
 		{
 			string filedir = "savedgame";
@@ -91,27 +96,36 @@ namespace loco16
 			}
 		}
 
-		public void WriteUncompressedToFile ( string a_filename, byte[] a_checksum )
+		public void WriteUncompressedToFile ( string a_filename )//, byte[] a_checksum )
 		{
+			// Clear the file if it exists
+			System.IO.File.WriteAllText( a_filename, string.Empty );
 			System.IO.FileStream fs = new System.IO.FileStream( a_filename, System.IO.FileMode.Append, System.IO.FileAccess.Write );
 			//System.IO.StreamWriter a = new System.IO.StreamWriter( a_filename, true );
-			int dataOffset = 0;
+
+			uint checksum = 0x0;
 
 			for ( int i = 0; i < m_chunks.Count; ++i )
 			{
-				byte[] header = m_chunks[i].GetHeader();
 				byte[] data = m_chunks[i].GetData();
 
+				byte[] header = new byte[5];
 				header[0] = 0x0; // Set the encoding type to unencoded data
 
-				fs.Write( header, dataOffset, header.Length );
-				dataOffset += header.Length;
+				byte[] dataLength = BitConverter.GetBytes( data.Length );
+				System.Buffer.BlockCopy( dataLength, 0, header, 1, 4 );
 
-				fs.Write( data, dataOffset, data.Length );
-				dataOffset += data.Length;
+				fs.Write( header, 0, header.Length );
+				fs.Write( data, 0, data.Length );
+
+				for ( int k = 0; k < header.Length; ++k )
+					checksum += header[k];
+				for ( int k = 0; k < data.Length; ++k )
+					checksum += data[k];
 			}
 
-			fs.Write( a_checksum, 0, a_checksum.Length );
+			byte[] checkBytes = BitConverter.GetBytes( checksum );
+			fs.Write( checkBytes, 0, checkBytes.Length );
 
 			fs.Close();
 		}
@@ -131,6 +145,23 @@ namespace loco16
 			}
 
 			return checksum;
+		}
+
+		public void FindTheMoney ( byte[] a_money, byte[] a_newValue )
+		{
+			for ( int i = 0; i < m_chunks.Count; ++i )
+			{
+				for ( int k = 0; k < m_chunks[i].GetData().Length - 1; ++k )
+				{
+					if ( m_chunks[i].GetData()[k] == a_money[0] && m_chunks[i].GetData()[k + 1] == a_money[1] )
+					{
+						Console.Write( "Found the money at position " + k + " in chunk " + i );
+						m_chunks[i].SetDataAtPos( k, a_newValue[0] );
+						m_chunks[i].SetDataAtPos( k + 1, a_newValue[1] );
+					}
+					// ox0000b9c0:c-d money in chunk 3
+				}
+			}
 		}
 
 		private int GetChunkSize ( byte[] a_header )

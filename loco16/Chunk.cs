@@ -39,14 +39,24 @@ namespace loco16
 			}
 		}
 
-		public byte[] GetHeader()
+		public byte[] GetHeader ()
 		{
 			return m_header;
 		}
 
-		public byte[] GetData()
+		public byte[] GetData ()
 		{
 			return m_decodedData;
+		}
+
+		public void SetDataAtPos ( int a_pos, byte a_data )
+		{
+			m_decodedData[a_pos] = a_data;
+		}
+
+		public byte[] GetRaw ()
+		{
+			return m_chunkData;
 		}
 	}
 }
